@@ -3,6 +3,10 @@ import numpy as np
 pd.set_option('max_columns', None)
 pd.set_option('max_rows', None)
 from sklearn.linear_model import LinearRegression
+from sklearn.preprocessing import StandardScaler
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import mean_squared_error
+
 
 train_df = pd.read_csv(r'C:\Users\lukem\Desktop\Github AI Projects\Data for ai competitions\Housing Prices\train.csv')
 test_df = pd.read_csv(r'C:\Users\lukem\Desktop\Github AI Projects\Data for ai competitions\Housing Prices\test.csv')
@@ -23,4 +27,34 @@ train = train_df[cols_to_use]
 test = test_df[cols_to_use]
 y = train_df['SalePrice']
 
+train.boxplot(column = 'LotArea', fontsize = 10, grid = True)
+train.boxplot(column = 'YearBuilt')
+train.boxplot(column = 'BedroomAbvGr')
+
+# From this, we can see the mean of all of the columns. LotArea and YearBuilt will need to be scaled down
+train.describe(percentiles = [.25, .5, .75, .9])
+
+cols_to_scale = train.iloc[:,:2]
+cols_to_scale.head()
+
+sc = StandardScaler()
+cols_to_scale2 = sc.fit_transform(cols_to_scale)
+#cols_to_scale2.describe()
+cols_to_scale2 = pd.DataFrame(cols_to_scale2)
+cols_to_scale2.head()
+cols_to_scale2 = cols_to_scale2.rename({0:"LotArea",1:"YearBuilt"}, axis = 1)
+cols_to_scale2.head()
+
+train = train.drop(['LotArea','YearBuilt'], axis = 1)
+
+cols_to_concat = [cols_to_scale2, train]
+train = pd.concat(cols_to_concat, axis = 1)
+train.head()
+
+X_train, X_test, y_train, y_test = train_test_split(train, y, test_size = 0.3, random_state=0)
+lr = LinearRegression()
+lr.fit(X_train, y_train)
+predictions = lr.predict(X_test)
+predictions = pd.Series(predictions)
+mean_squared_error(y_test, predictions)
 
